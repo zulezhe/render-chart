@@ -1,0 +1,288 @@
+import { useState, useCallback } from 'react';
+import { ChartConfig, ChartType } from '../types/chart';
+
+const defaultConfig: ChartConfig = {
+  title: {
+    text: '示例图表',
+    left: 'center',
+    textStyle: {
+      color: '#1e293b',
+      fontSize: 18,
+      fontWeight: 'bold'
+    }
+  },
+  tooltip: {
+    trigger: 'axis',
+    show: true,
+    backgroundColor: '#ffffff',
+    textStyle: {
+      color: '#1e293b'
+    }
+  },
+  legend: {
+    data: ['系列1', '系列2'],
+    position: 'bottom',
+    show: true,
+    textStyle: {
+      color: '#6b7280',
+      fontSize: 12
+    },
+    itemGap: 15,
+    icon: 'circle',
+    itemWidth: 12,
+    itemHeight: 12,
+    padding: [10, 10, 10, 10],
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+    borderWidth: 0
+  },
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '15%',
+    top: '10%',
+    containLabel: true,
+    show: true,
+    borderColor: 'transparent'
+  },
+  xAxis: {
+    type: 'category',
+    boundaryGap: false,
+    name: 'X轴',
+    nameTextStyle: {
+      color: '#6b7280',
+      fontSize: 12
+    },
+    data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+    axisLine: {
+      lineStyle: {
+        color: '#e5e7eb',
+        width: 1,
+        type: 'solid'
+      }
+    },
+    axisLabel: {
+      color: '#6b7280',
+      fontSize: 12,
+      rotate: 0,
+      padding: [5, 3, 5, 3]
+    },
+    axisTick: {
+      show: true,
+      lineStyle: {
+        color: '#d1d5db',
+        width: 1
+      },
+      length: 5
+    },
+    splitLine: {
+      show: true,
+      lineStyle: {
+        color: '#f3f4f6',
+        type: 'dashed'
+      }
+    }
+  },
+  yAxis: {
+    type: 'value',
+    name: 'Y轴',
+    nameTextStyle: {
+      color: '#6b7280',
+      fontSize: 12
+    },
+    min: null,
+    max: null,
+    splitNumber: 5,
+    axisLine: {
+      lineStyle: {
+        color: '#e5e7eb',
+        width: 1,
+        type: 'solid'
+      }
+    },
+    axisLabel: {
+      color: '#6b7280',
+      fontSize: 12,
+      padding: [5, 3, 5, 3]
+    },
+    axisTick: {
+      show: true,
+      lineStyle: {
+        color: '#d1d5db',
+        width: 1
+      },
+      length: 5
+    },
+    splitLine: {
+      show: true,
+      lineStyle: {
+        color: '#f3f4f6',
+        type: 'dashed'
+      }
+    }
+  },
+  toolbox: {
+    show: true,
+    position: 'right-top',
+    backgroundColor: 'transparent',
+    feature: {
+      saveAsImage: {},
+      dataZoom: {
+        show: true
+      },
+      restore: {
+        show: true
+      }
+    }
+  },
+  animation: true,
+  animationDuration: 1500,
+  animationEasing: 'cubicOut',
+  animationDelay: 0,
+  animationDurationUpdate: 1000,
+  animationEasingUpdate: 'cubicOut',
+  series: [
+    {
+      name: '系列1',
+      type: 'line',
+      data: [120, 200, 150, 80, 70, 110, 130],
+      smooth: true,
+      itemStyle: {
+        color: '#3b82f6'
+      },
+      lineStyle: {
+        width: 2
+      },
+      label: {
+        show: false,
+        color: '#1e293b',
+        fontSize: 11,
+        position: 'top'
+      },
+      barWidth: 20,
+      emphasis: {
+        itemStyle: {
+          scale: true,
+          scaleSize: 10
+        }
+      }
+    },
+    {
+      name: '系列2',
+      type: 'line',
+      data: [80, 150, 120, 90, 60, 100, 110],
+      smooth: true,
+      itemStyle: {
+        color: '#8b5cf6'
+      },
+      lineStyle: {
+        width: 2
+      },
+      label: {
+        show: false,
+        color: '#1e293b',
+        fontSize: 11,
+        position: 'top'
+      },
+      barWidth: 20,
+      emphasis: {
+        itemStyle: {
+          scale: true,
+          scaleSize: 10
+        }
+      }
+    }
+  ],
+  backgroundColor: '#ffffff',
+  padding: [20, 30, 30, 30],
+  dataZoom: [
+    {
+      type: 'inside',
+      xAxisIndex: 0,
+      zoomOnMouseWheel: true,
+      moveOnMouseMove: true,
+      moveOnMouseWheel: true
+    }
+  ]
+};
+
+export const useConfigManager = () => {
+  const [config, setConfig] = useState<ChartConfig>(defaultConfig);
+  const [chartType, setChartType] = useState<ChartType>('line');
+  const [jsonConfig, setJsonConfig] = useState<string>(JSON.stringify(defaultConfig, null, 2));
+
+  const updateConfig = useCallback((updates: Partial<ChartConfig>) => {
+    setConfig(prev => {
+      const newConfig = { ...prev, ...updates };
+      setJsonConfig(JSON.stringify(newConfig, null, 2));
+      return newConfig;
+    });
+  }, []);
+
+  const updateSeriesType = useCallback((type: ChartType) => {
+    setChartType(type);
+    setConfig(prev => {
+      const newConfig = {
+        ...prev,
+        series: prev.series.map((series, index) => ({
+          ...series,
+          type
+        }))
+      };
+      setJsonConfig(JSON.stringify(newConfig, null, 2));
+      return newConfig;
+    });
+  }, []);
+
+  const updateSeriesData = useCallback((seriesIndex: number, field: string, value: any) => {
+    setConfig(prev => {
+      const newSeries = [...prev.series];
+      newSeries[seriesIndex] = {
+        ...newSeries[seriesIndex],
+        [field]: value
+      };
+      const newConfig = { ...prev, series: newSeries };
+      setJsonConfig(JSON.stringify(newConfig, null, 2));
+      return newConfig;
+    });
+  }, []);
+
+  const updateConfigFromJson = useCallback((jsonString: string) => {
+    try {
+      const parsedConfig = JSON.parse(jsonString);
+      setConfig(parsedConfig);
+      setJsonConfig(jsonString);
+      return true;
+    } catch (error) {
+      console.error('Invalid JSON configuration:', error);
+      return false;
+    }
+  }, []);
+
+  const resetConfig = useCallback(() => {
+    setConfig(defaultConfig);
+    setJsonConfig(JSON.stringify(defaultConfig, null, 2));
+    setChartType('line');
+  }, []);
+
+  const exportConfig = useCallback(() => {
+    return jsonConfig;
+  }, [jsonConfig]);
+
+  const importConfig = useCallback((configString: string) => {
+    return updateConfigFromJson(configString);
+  }, [updateConfigFromJson]);
+
+  return {
+    config,
+    chartType,
+    jsonConfig,
+    updateConfig,
+    updateSeriesType,
+    updateSeriesData,
+    updateConfigFromJson,
+    resetConfig,
+    exportConfig,
+    importConfig
+  };
+};

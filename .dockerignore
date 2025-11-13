@@ -1,0 +1,19 @@
+# 依赖相关（容器内会重新安装，无需复制）
+node_modules/
+package-lock.json
+npm-debug.log
+
+# 系统/编辑器文件
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# 输出文件（渲染的图片，容器内生成后可通过挂载目录获取）
+*.png
+*.jpg
+*.webp
+
+# 其他无关文件
+README.md
+LICENSE
