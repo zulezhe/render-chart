@@ -30,6 +30,25 @@ export const ServerRender: React.FC<ServerRenderProps> = ({
     }
   }, [config]);
 
+  // 监听自定义刷新和下载事件
+  useEffect(() => {
+    const handleRefreshEvent = () => {
+      handleServerRender();
+    };
+
+    const handleDownloadEvent = () => {
+      handleDownload();
+    };
+
+    window.addEventListener('refreshServerChart', handleRefreshEvent);
+    window.addEventListener('downloadServerChart', handleDownloadEvent);
+
+    return () => {
+      window.removeEventListener('refreshServerChart', handleRefreshEvent);
+      window.removeEventListener('downloadServerChart', handleDownloadEvent);
+    };
+  }, []);
+
   const handleServerRender = async () => {
     if (!config || !config.series || config.series.length === 0) {
       setError('请先配置图表数据');
@@ -85,37 +104,6 @@ export const ServerRender: React.FC<ServerRenderProps> = ({
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Monitor className="h-5 w-5 text-green-600" />
-          服务端渲染
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          {lastRenderTime > 0 && (
-            <span className="text-xs text-muted-foreground">
-              渲染时间: {formatRenderTime(lastRenderTime)}
-            </span>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleServerRender}
-            disabled={isLoading || !config?.series?.length}
-          >
-            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? '渲染中...' : '重新渲染'}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            disabled={!imageUrl}
-          >
-            <Download className="h-4 w-4 mr-1" />
-            下载PNG
-          </Button>
-        </div>
-      </CardHeader>
       <CardContent className="flex-1 p-0">
         <div className="w-full h-full relative">
           {isLoading && (
@@ -146,16 +134,13 @@ export const ServerRender: React.FC<ServerRenderProps> = ({
           )}
 
           {!isLoading && !error && imageUrl && (
-            <div className="w-full h-full flex items-center justify-center p-4 bg-muted/20">
-              <div className="relative">
+            <div className="w-full h-full flex items-center justify-center p-2 bg-muted/20 overflow-hidden">
+              <div className="relative w-full h-full flex items-center justify-center">
                 <img
                   src={imageUrl}
                   alt="Server-rendered chart"
-                  className="max-w-full max-h-full object-contain shadow-lg rounded"
+                  className="w-full h-full  shadow-lg rounded"
                 />
-                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                  服务端渲染 {width}×{height}
-                </div>
               </div>
             </div>
           )}

@@ -3,10 +3,18 @@ import { ChevronDown, ChevronRight, Settings, Palette, BarChart3, Sliders, List,
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Switch } from './ui/switch';
+import { Slider } from './ui/slider';
+import { Separator } from './ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ChartType, ConfigPanelState } from '../types/chart';
 import { useConfigManager } from '../hooks/useConfigManager';
+import { AxisConfig } from './chart-config/AxisConfig';
+import { LegendConfig } from './chart-config/LegendConfig';
+import { TooltipConfig } from './chart-config/TooltipConfig';
+import { GridConfig } from './chart-config/GridConfig';
 
 interface ChartConfigProps {
   onConfigChange: () => void;
@@ -23,6 +31,9 @@ export const ChartConfig: React.FC<ChartConfigProps> = ({ onConfigChange }) => {
     animation: false,
     advanced: false
   });
+
+  // 新增的配置分组状态
+  const [activeConfigGroup, setActiveConfigGroup] = useState<string>('axis');
 
   const togglePanel = (panel: keyof ConfigPanelState) => {
     setExpandedPanels(prev => ({
@@ -334,6 +345,69 @@ export const ChartConfig: React.FC<ChartConfigProps> = ({ onConfigChange }) => {
                 )}
               </div>
             ))}
+          </CardContent>
+        )}
+      </Card>
+
+      {/* 高级配置面板 */}
+      <Card className="overflow-hidden">
+        <CardHeader
+          className="cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+          onClick={() => togglePanel('advanced')}
+        >
+          <CardTitle className="flex items-center justify-between text-base">
+            <div className="flex items-center gap-2">
+              <Cog className="h-4 w-4 text-blue-600" />
+              高级配置
+            </div>
+            {expandedPanels.advanced ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </CardTitle>
+        </CardHeader>
+        {expandedPanels.advanced && (
+          <CardContent className="space-y-4">
+            {/* 配置分组导航 */}
+            <div className="flex flex-wrap gap-2 pb-4 border-b">
+              <Button
+                variant={activeConfigGroup === 'axis' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveConfigGroup('axis')}
+                className="text-xs"
+              >
+                坐标轴
+              </Button>
+              <Button
+                variant={activeConfigGroup === 'legend' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveConfigGroup('legend')}
+                className="text-xs"
+              >
+                图例
+              </Button>
+              <Button
+                variant={activeConfigGroup === 'tooltip' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveConfigGroup('tooltip')}
+                className="text-xs"
+              >
+                提示框
+              </Button>
+              <Button
+                variant={activeConfigGroup === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveConfigGroup('grid')}
+                className="text-xs"
+              >
+                网格
+              </Button>
+            </div>
+
+            {/* 配置内容区域 */}
+            <div className="min-h-[200px]">
+              {activeConfigGroup === 'axis' && <AxisConfig />}
+              {activeConfigGroup === 'legend' && <LegendConfig />}
+              {activeConfigGroup === 'tooltip' && <TooltipConfig />}
+              {activeConfigGroup === 'grid' && <GridConfig />}
+            </div>
           </CardContent>
         )}
       </Card>

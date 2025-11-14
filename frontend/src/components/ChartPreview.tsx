@@ -1,3 +1,10 @@
+/*
+ * @Author: oliver
+ * @Date: 2025-11-14 13:54:44
+ * @LastEditors: oliver
+ * @LastEditTime: 2025-11-14 13:58:47
+ * @Description: 
+ */
 import React, { useState, useCallback, useRef } from 'react';
 import { Eye, Download, MousePointer, Share2, RefreshCw, Monitor } from 'lucide-react';
 import { Button } from './ui/button';
@@ -23,6 +30,20 @@ export const ChartPreview: React.FC<ChartPreviewProps> = ({ exportChart, onShare
   React.useEffect(() => {
     updateChart(config);
   }, [config, updateChart]);
+
+  // 监听自定义刷新事件
+  React.useEffect(() => {
+    const handleRefreshEvent = () => {
+      manualResize();
+      updateChart(config);
+    };
+
+    window.addEventListener('refreshClientChart', handleRefreshEvent);
+
+    return () => {
+      window.removeEventListener('refreshClientChart', handleRefreshEvent);
+    };
+  }, [config, updateChart, manualResize]);
 
   const handleExportImage = async (format: 'png' | 'jpeg' = 'png') => {
     try {
@@ -65,64 +86,11 @@ export const ChartPreview: React.FC<ChartPreviewProps> = ({ exportChart, onShare
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Eye className="h-5 w-5 text-blue-600" />
-          客户端渲染
-        </CardTitle>
-        <div className="flex gap-2">
-          <Button
-            variant={interactionMode ? "default" : "outline"}
-            size="sm"
-            onClick={toggleInteractionMode}
-            className={interactionMode ? "bg-green-600 hover:bg-green-700" : ""}
-          >
-            <MousePointer className="h-4 w-4 mr-1" />
-            {interactionMode ? '交互中' : '交互调整'}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              manualResize();
-              updateChart(config);
-            }}
-          >
-            <RefreshCw className="h-4 w-4 mr-1" />
-            刷新
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleExportImage('png')}
-          >
-            <Download className="h-4 w-4 mr-1" />
-            导出PNG
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleExportImage('jpeg')}
-          >
-            <Download className="h-4 w-4 mr-1" />
-            导出JPEG
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onShare}
-          >
-            <Share2 className="h-4 w-4 mr-1" />
-            分享
-          </Button>
-        </div>
-      </CardHeader>
       <CardContent className="flex-1 p-0">
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-full min-h-[300px]">
           <div
             ref={chartRef}
             className={`w-full h-full ${interactionMode ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
-            style={{ minHeight: '400px' }}
           />
 
           {interactionMode && (
