@@ -37,7 +37,7 @@ export const ConfigEditor: React.FC = () => {
     });
 
     return unsubscribe;
-  }, [addConfigChangeListener, isLocalChange, jsonConfig]);
+  }, [addConfigChangeListener, jsonConfig]);
 
   // ✅ 优化：简化同步逻辑，避免重复更新
   useEffect(() => {
@@ -47,7 +47,7 @@ export const ConfigEditor: React.FC = () => {
       const isValidJson = validateJSON(jsonConfig);
       setIsValid(isValidJson);
     }
-  }, [jsonConfig, isLocalChange, localConfig]);
+  }, [jsonConfig, localConfig]);
 
   // ✅ 修复：优化防抖处理，与useConfigManager协调
   const handleConfigChange = useCallback((value: string) => {

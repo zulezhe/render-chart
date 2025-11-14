@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { unstable_batchedUpdates } from "react-dom";
+import { flushSync } from "react-dom";
 import { ChartConfig, ChartType } from "../types/chart";
 
 const defaultConfig: ChartConfig = {
@@ -304,22 +304,26 @@ export const useConfigManager = () => {
       setConfig((prevConfig) => {
         const newConfig = deepMerge(prevConfig, updates);
         console.log('useConfigManager: new config calculated:', newConfig);
+        console.log('useConfigManager: new config title:', newConfig.title.text);
 
         // 验证配置
         const validation = validateConfig(newConfig);
         const jsonString = JSON.stringify(newConfig, null, 2);
 
-        // ✅ 关键修复：使用 unstable_batchedUpdates 确保状态同步更新
-        unstable_batchedUpdates(() => {
-          // 同步更新所有状态
-          setJsonConfig(jsonString);
-          setValidationErrors(validation.errors);
-          setIsUpdating(false);
-          console.log('useConfigManager: all states updated successfully');
+        // ✅ 修复：使用unstable_batchedUpdates避免flushSync警告
+        import('react-dom').then(({ unstable_batchedUpdates }) => {
+          unstable_batchedUpdates(() => {
+            setJsonConfig(jsonString);
+            setValidationErrors(validation.errors);
+            setIsUpdating(false);
 
-          // ✅ 同步通知所有监听器
-          notifyConfigChange();
-          console.log('useConfigManager: listeners notified');
+            console.log('useConfigManager: all states updated successfully');
+            console.log('useConfigManager: jsonConfig updated to:', jsonString.slice(0, 100) + '...');
+
+            // ✅ 修复：在批量更新后立即通知监听器
+            notifyConfigChange();
+            console.log('useConfigManager: listeners notified');
+          });
         });
 
         return newConfig;
@@ -362,24 +366,25 @@ export const useConfigManager = () => {
         setIsUpdating(true);
         console.log('useConfigManager: updateConfigFromJson with valid JSON');
 
-        // ✅ 修复：使用批量状态更新确保原子性操作
-        unstable_batchedUpdates(() => {
-          setConfig(parsedConfig);
-          setJsonConfig(jsonString);
-          setValidationErrors([]);
+        // ✅ 修复：直接按顺序更新状态，确保同步
+        setConfig(parsedConfig);
+        setJsonConfig(jsonString);
+        setValidationErrors([]);
 
-          // 更新图表类型
-          if (parsedConfig.series && parsedConfig.series.length > 0) {
-            setChartType(parsedConfig.series[0].type || 'line');
-          }
+        // 更新图表类型
+        if (parsedConfig.series && parsedConfig.series.length > 0) {
+          setChartType(parsedConfig.series[0].type || 'line');
+        }
 
-          setIsUpdating(false);
-          console.log('useConfigManager: all states updated from JSON');
+        setIsUpdating(false);
+        console.log('useConfigManager: all states updated from JSON');
+        console.log('useConfigManager: config title updated to:', parsedConfig.title.text);
 
-          // ✅ 同步通知所有监听器
+        // ✅ 同步通知所有监听器
+        setTimeout(() => {
           notifyConfigChange();
           console.log('useConfigManager: listeners notified from JSON update');
-        });
+        }, 0);
 
         return true;
       } else {
@@ -400,19 +405,20 @@ export const useConfigManager = () => {
 
     const defaultJsonString = JSON.stringify(defaultConfig, null, 2);
 
-    // ✅ 修复：使用批量状态更新确保原子性操作
-    unstable_batchedUpdates(() => {
-      setConfig(defaultConfig);
-      setJsonConfig(defaultJsonString);
-      setChartType("line");
-      setValidationErrors([]);
-      setIsUpdating(false);
-      console.log('useConfigManager: all states reset to default');
+    // ✅ 修复：直接按顺序更新状态，确保同步
+    setConfig(defaultConfig);
+    setJsonConfig(defaultJsonString);
+    setChartType("line");
+    setValidationErrors([]);
+    setIsUpdating(false);
+    console.log('useConfigManager: all states reset to default');
+    console.log('useConfigManager: config title reset to:', defaultConfig.title.text);
 
-      // ✅ 同步通知所有监听器
+    // ✅ 同步通知所有监听器
+    setTimeout(() => {
       notifyConfigChange();
       console.log('useConfigManager: listeners notified of reset');
-    });
+    }, 0);
   }, [notifyConfigChange]);
 
   const exportConfig = useCallback(() => {

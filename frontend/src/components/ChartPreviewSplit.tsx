@@ -3,49 +3,49 @@
  * @Date: 2025-11-14 13:40:00
  * @LastEditors: oliver
  * @LastEditTime: 2025-11-14 14:07:53
- * @Description: 
+ * @Description:
  */
-import React, { useState } from 'react';
-import { Eye, Monitor, ArrowUpDown, RefreshCw, Download } from 'lucide-react';
-import { Button } from './ui/button';
-import { ChartPreview } from './ChartPreview';
-import { ServerRender } from './ServerRender';
+import React, { useState } from "react";
+import { Eye, Monitor, ArrowUpDown, RefreshCw, Download } from "lucide-react";
+import { Button } from "./ui/button";
+import { ChartPreview } from "./ChartPreview";
+import { ServerRender } from "./ServerRender";
 
 interface ChartPreviewSplitProps {
-  exportChart: (format: 'png' | 'jpeg') => void;
+  exportChart: (format: "png" | "jpeg") => void;
   onShare: () => void;
 }
 
 export const ChartPreviewSplit: React.FC<ChartPreviewSplitProps> = ({
   exportChart,
-  onShare
+  onShare,
 }) => {
   const [clientHeight, setClientHeight] = useState(50); // 百分比
 
   const handleHeightChange = (delta: number) => {
-    setClientHeight(prev => Math.max(20, Math.min(80, prev + delta)));
+    setClientHeight((prev) => Math.max(20, Math.min(80, prev + delta)));
   };
 
   // 客户端渲染按钮处理函数
   const handleClientRefresh = () => {
     // 触发客户端图表刷新
-    const event = new CustomEvent('refreshClientChart');
+    const event = new CustomEvent("refreshClientChart");
     window.dispatchEvent(event);
   };
 
   const handleClientExport = () => {
-    exportChart('png');
+    exportChart("png");
   };
 
   // 服务端渲染按钮处理函数
   const handleServerRefresh = () => {
     // 触发服务端图表刷新
-    const event = new CustomEvent('refreshServerChart');
+    const event = new CustomEvent("refreshServerChart");
     window.dispatchEvent(event);
   };
 
   const handleServerDownload = () => {
-    const event = new CustomEvent('downloadServerChart');
+    const event = new CustomEvent("downloadServerChart");
     window.dispatchEvent(event);
   };
 
@@ -96,8 +96,7 @@ export const ChartPreviewSplit: React.FC<ChartPreviewSplitProps> = ({
 
         {/* 分割线和间距 */}
         <div className="h-5 bg-background flex-shrink-0 relative">
-          <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex items-center justify-center">
-          </div>
+          <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex items-center justify-center"></div>
         </div>
 
         {/* 服务端渲染区域 */}
@@ -137,10 +136,7 @@ export const ChartPreviewSplit: React.FC<ChartPreviewSplitProps> = ({
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-hidden chart-content">
-            <ServerRender
-              width={800}
-              height={600}
-            />
+            <ServerRender width={800} height={600} />
           </div>
         </div>
       </div>

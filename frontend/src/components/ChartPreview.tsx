@@ -24,37 +24,46 @@ export const ChartPreview: React.FC<ChartPreviewProps> = ({ exportChart, onShare
   const { config, addConfigChangeListener, validationErrors } = useConfigManager();
   const [interactionMode, setInteractionMode] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [configVersion, setConfigVersion] = useState(0);
   const lastConfigRef = useRef<string>('');
 
   // ✅ 修复：优化配置监听，减少不必要的重新渲染
   const configRef = useRef(config);
   configRef.current = config;
 
-  // ✅ 修复：简化依赖数组，只在关键配置变化时更新图表
-  React.useEffect(() => {
-    if (validationErrors.length === 0 && !isUpdating) {
-      console.log('ChartPreview: Updating chart with new config');
-      updateChart(configRef.current);
+  // ✅ 修复：简化依赖数组，避免闭包陷阱和无限循环
+  const memoizedUpdateChart = React.useCallback(() => {
+    if (validationErrors.length === 0) {
+      console.log('ChartPreview: Updating chart with new config', config.title.text);
+      console.log('ChartPreview: Full config object:', JSON.stringify(config, null, 2));
+      updateChart(config);
     }
-  }, [config.title.text, config.series, updateChart]); // 简化依赖数组
+  }, [config, updateChart, validationErrors.length]);
 
-  // 使用配置变化监听器
+  React.useEffect(() => {
+    memoizedUpdateChart();
+  }, [memoizedUpdateChart]);
+
+  // ✅ 修复：使用版本控制机制确保配置变化时强制更新
   React.useEffect(() => {
     const unsubscribe = addConfigChangeListener(() => {
-      console.log('ChartPreview: Config change listener triggered');
-      setIsUpdating(true);
-      // ✅ 优化：给状态更新留出时间，然后重置更新状态
-      setTimeout(() => {
-        setIsUpdating(false);
-        if (validationErrors.length === 0) {
-          console.log('ChartPreview: Force updating chart after listener');
-          updateChart(configRef.current);
-        }
-      }, 150);
+      console.log('ChartPreview: Config change listener triggered, incrementing version');
+      setConfigVersion(prev => prev + 1);
     });
 
     return unsubscribe;
-  }, [addConfigChangeListener, updateChart, validationErrors]);
+  }, [addConfigChangeListener]);
+
+  // ✅ 修复：当版本变化时，强制更新图表
+  React.useEffect(() => {
+    console.log('ChartPreview: Config version changed to:', configVersion);
+    console.log('ChartPreview: Current config title:', config.title.text);
+
+    if (validationErrors.length === 0) {
+      console.log('ChartPreview: Updating chart due to version change');
+      memoizedUpdateChart();
+    }
+  }, [configVersion, memoizedUpdateChart, validationErrors]);
 
   // 监听自定义刷新事件
   React.useEffect(() => {
