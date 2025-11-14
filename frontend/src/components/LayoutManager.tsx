@@ -11,17 +11,15 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { copyToClipboard, downloadFile } from '../lib/utils';
+import { ConfigDebug } from './ConfigDebug';
 
 export const LayoutManager: React.FC = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [activeView, setActiveView] = useState<'split' | 'code' | 'preview'>('split');
-  const { exportConfig, resetConfig } = useConfigManager();
+  const [debugMode, setDebugMode] = useState(true); // ✅ 临时启用调试模式进行测试
+  const { exportConfig, resetConfig, addConfigChangeListener } = useConfigManager();
 
-  const handleConfigChange = () => {
-    // 配置已自动同步，这里可以添加额外的逻辑
-    console.log('Configuration updated');
-  };
-
+  
   const handleSaveConfig = () => {
     const config = exportConfig();
     // 这里可以调用API保存配置到服务器
@@ -50,7 +48,6 @@ export const LayoutManager: React.FC = () => {
   const handleReset = () => {
     if (confirm('确定要重置所有配置吗？')) {
       resetConfig();
-      handleConfigChange();
     }
   };
 
@@ -95,6 +92,14 @@ export const LayoutManager: React.FC = () => {
               <Download className="h-4 w-4 mr-2" />
               导出配置
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setDebugMode(!debugMode)}
+              className={debugMode ? 'bg-blue-50 border-blue-200' : ''}
+            >
+              {debugMode ? '🐛 调试中' : '🐛 调试'}
+            </Button>
+
             <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" onClick={handleShare}>
@@ -148,7 +153,7 @@ export const LayoutManager: React.FC = () => {
                   </h2>
                 </div>
                 <div className="h-[calc(100%-60px)] overflow-y-auto p-4">
-                  <ChartConfig onConfigChange={handleConfigChange} />
+                  <ChartConfig />
                 </div>
               </div>
             </Panel>
@@ -169,7 +174,7 @@ export const LayoutManager: React.FC = () => {
                   </h2>
                 </div>
                 <div className="h-[calc(100%-60px)] overflow-y-auto p-4">
-                  <ConfigEditor onConfigChange={handleConfigChange} />
+                  <ConfigEditor />
                 </div>
               </div>
             </Panel>
@@ -212,7 +217,7 @@ export const LayoutManager: React.FC = () => {
                   </h2>
                 </div>
                 <div className="h-[calc(100%-60px)] overflow-y-auto p-4">
-                  <ChartConfig onConfigChange={handleConfigChange} />
+                  <ChartConfig />
                 </div>
               </div>
             </Panel>
@@ -233,7 +238,7 @@ export const LayoutManager: React.FC = () => {
                   </h2>
                 </div>
                 <div className="h-[calc(100%-60px)] overflow-y-auto p-4">
-                  <ConfigEditor onConfigChange={handleConfigChange} />
+                  <ConfigEditor />
                 </div>
               </div>
             </Panel>
@@ -252,7 +257,7 @@ export const LayoutManager: React.FC = () => {
                   </h2>
                 </div>
                 <div className="h-[calc(100%-60px)] overflow-y-auto p-4">
-                  <ChartConfig onConfigChange={handleConfigChange} />
+                  <ChartConfig />
                 </div>
               </div>
             </Panel>
@@ -283,6 +288,9 @@ export const LayoutManager: React.FC = () => {
           </PanelGroup>
         )}
       </main>
+
+      {/* 调试信息 */}
+      <ConfigDebug enabled={debugMode} />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
@@ -7,12 +7,20 @@ import { Slider } from '../ui/slider';
 import { useConfigManager } from '../../hooks/useConfigManager';
 
 export const AxisConfig: React.FC = () => {
-  const { config, updateConfig } = useConfigManager();
+  const { config, updateConfig, addConfigChangeListener } = useConfigManager();
+
+  // 使用配置变化监听器
+  useEffect(() => {
+    const unsubscribe = addConfigChangeListener(() => {
+      // 配置变化时的处理逻辑
+    });
+
+    return unsubscribe;
+  }, [addConfigChangeListener]);
 
   // 更新坐标轴配置的通用函数
   const updateAxisConfig = (axisType: 'xAxis' | 'yAxis', path: string, value: any) => {
     updateConfig({
-      ...config,
       [axisType]: {
         ...config[axisType],
         [path]: value
@@ -23,7 +31,6 @@ export const AxisConfig: React.FC = () => {
   // 更新嵌套配置
   const updateNestedAxisConfig = (axisType: 'xAxis' | 'yAxis', parentPath: string, field: string, value: any) => {
     updateConfig({
-      ...config,
       [axisType]: {
         ...config[axisType],
         [parentPath]: {
@@ -61,40 +68,46 @@ export const AxisConfig: React.FC = () => {
 
           {/* 显示轴线 */}
           <div className="flex items-center justify-between">
-            <Label htmlFor="xAxis-axisLine-show" className="text-xs">显示轴线</Label>
+            <Label className="text-xs">显示轴线</Label>
             <Switch
-              id="xAxis-axisLine-show"
-              checked={config.xAxis?.axisLine?.show !== false}
-              onCheckedChange={(checked) => updateNestedAxisConfig('xAxis', 'axisLine', 'show', checked)}
+              checked={config.xAxis?.axisLine?.lineStyle?.color !== 'transparent'}
+              onCheckedChange={(checked) => updateNestedAxisConfig('xAxis', 'axisLine', 'lineStyle', {
+                ...config.xAxis?.axisLine?.lineStyle,
+                color: checked ? (config.xAxis?.axisLine?.lineStyle?.color || '#e5e7eb') : 'transparent'
+              })}
             />
           </div>
 
           {/* 轴线样式 */}
-          {config.xAxis?.axisLine?.show !== false && (
+          {config.xAxis?.axisLine?.lineStyle?.color !== 'transparent' && (
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="xAxis-axisLine-color" className="text-xs">轴线颜色</Label>
+                <Label className="text-xs">轴线颜色</Label>
                 <Input
-                  id="xAxis-axisLine-color"
                   type="color"
-                  value={config.xAxis?.axisLine?.color || '#333'}
-                  onChange={(e) => updateNestedAxisConfig('xAxis', 'axisLine', 'color', e.target.value)}
+                  value={config.xAxis?.axisLine?.lineStyle?.color === 'transparent' ? '#333' : config.xAxis?.axisLine?.lineStyle?.color || '#333'}
+                  onChange={(e) => updateNestedAxisConfig('xAxis', 'axisLine', 'lineStyle', {
+                    ...config.xAxis?.axisLine?.lineStyle,
+                    color: e.target.value
+                  })}
                   className="h-8 w-20"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="xAxis-axisLine-width" className="text-xs">轴线宽度</Label>
+                <Label className="text-xs">轴线宽度</Label>
                 <div className="flex items-center gap-2">
                   <Slider
-                    id="xAxis-axisLine-width"
                     min={1}
                     max={5}
                     step={0.5}
-                    value={[config.xAxis?.axisLine?.width || 1]}
-                    onValueChange={([value]) => updateNestedAxisConfig('xAxis', 'axisLine', 'width', value)}
+                    value={[config.xAxis?.axisLine?.lineStyle?.width || 1]}
+                    onValueChange={([value]) => updateNestedAxisConfig('xAxis', 'axisLine', 'lineStyle', {
+                      ...config.xAxis?.axisLine?.lineStyle,
+                      width: value
+                    })}
                     className="flex-1"
                   />
-                  <span className="text-xs w-8">{config.xAxis?.axisLine?.width || 1}px</span>
+                  <span className="text-xs w-8">{config.xAxis?.axisLine?.lineStyle?.width || 1}px</span>
                 </div>
               </div>
             </div>
@@ -102,9 +115,8 @@ export const AxisConfig: React.FC = () => {
 
           {/* 轴名称 */}
           <div className="space-y-2">
-            <Label htmlFor="xAxis-name" className="text-xs">轴名称</Label>
+            <Label className="text-xs">轴名称</Label>
             <Input
-              id="xAxis-name"
               value={config.xAxis?.name || ''}
               onChange={(e) => updateAxisConfig('xAxis', 'name', e.target.value)}
               placeholder="输入X轴名称"
@@ -139,19 +151,20 @@ export const AxisConfig: React.FC = () => {
 
           {/* 显示轴线 */}
           <div className="flex items-center justify-between">
-            <Label htmlFor="yAxis-axisLine-show" className="text-xs">显示轴线</Label>
+            <Label className="text-xs">显示轴线</Label>
             <Switch
-              id="yAxis-axisLine-show"
-              checked={config.yAxis?.axisLine?.show !== false}
-              onCheckedChange={(checked) => updateNestedAxisConfig('yAxis', 'axisLine', 'show', checked)}
+              checked={config.yAxis?.axisLine?.lineStyle?.color !== 'transparent'}
+              onCheckedChange={(checked) => updateNestedAxisConfig('yAxis', 'axisLine', 'lineStyle', {
+                ...config.yAxis?.axisLine?.lineStyle,
+                color: checked ? (config.yAxis?.axisLine?.lineStyle?.color || '#e5e7eb') : 'transparent'
+              })}
             />
           </div>
 
           {/* 轴名称 */}
           <div className="space-y-2">
-            <Label htmlFor="yAxis-name" className="text-xs">轴名称</Label>
+            <Label className="text-xs">轴名称</Label>
             <Input
-              id="yAxis-name"
               value={config.yAxis?.name || ''}
               onChange={(e) => updateAxisConfig('yAxis', 'name', e.target.value)}
               placeholder="输入Y轴名称"

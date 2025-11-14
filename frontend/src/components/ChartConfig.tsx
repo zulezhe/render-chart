@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronDown, ChevronRight, Settings, Palette, BarChart3, Sliders, List, Film, Cog } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -16,12 +16,18 @@ import { LegendConfig } from './chart-config/LegendConfig';
 import { TooltipConfig } from './chart-config/TooltipConfig';
 import { GridConfig } from './chart-config/GridConfig';
 
-interface ChartConfigProps {
-  onConfigChange: () => void;
-}
+export const ChartConfig: React.FC = () => {
+  const {
+    config,
+    chartType,
+    updateConfig,
+    updateSeriesType,
+    updateSeriesData,
+    addConfigChangeListener,
+    isUpdating,
+    validationErrors
+  } = useConfigManager();
 
-export const ChartConfig: React.FC<ChartConfigProps> = ({ onConfigChange }) => {
-  const { config, chartType, updateConfig, updateSeriesType, updateSeriesData } = useConfigManager();
   const [expandedPanels, setExpandedPanels] = useState<ConfigPanelState>({
     basic: true,
     global: false,
@@ -35,6 +41,19 @@ export const ChartConfig: React.FC<ChartConfigProps> = ({ onConfigChange }) => {
   // 新增的配置分组状态
   const [activeConfigGroup, setActiveConfigGroup] = useState<string>('axis');
 
+  // ✅ 优化：添加配置同步检查机制
+  const lastConfigRef = useRef(config);
+
+  // 使用配置变化监听器
+  useEffect(() => {
+    const unsubscribe = addConfigChangeListener(() => {
+      // ✅ 修复：确保组件在配置变化时能感知到更新
+      lastConfigRef.current = config;
+    });
+
+    return unsubscribe;
+  }, [addConfigChangeListener, config]);
+
   const togglePanel = (panel: keyof ConfigPanelState) => {
     setExpandedPanels(prev => ({
       ...prev,
@@ -42,14 +61,14 @@ export const ChartConfig: React.FC<ChartConfigProps> = ({ onConfigChange }) => {
     }));
   };
 
-  const handleConfigUpdate = (updates: any) => {
+  // ✅ 修复：使用函数式更新避免闭包陷阱，并确保配置更新能正确触发
+  const handleConfigUpdate = useCallback((updates: any) => {
+    console.log('ChartConfig: handleConfigUpdate called with:', updates);
     updateConfig(updates);
-    onConfigChange();
-  };
+  }, [updateConfig]);
 
   const handleSeriesUpdate = (seriesIndex: number, field: string, value: any) => {
     updateSeriesData(seriesIndex, field, value);
-    onConfigChange();
   };
 
   const chartTypes: { value: ChartType; label: string }[] = [
@@ -63,6 +82,28 @@ export const ChartConfig: React.FC<ChartConfigProps> = ({ onConfigChange }) => {
 
   return (
     <div className="w-full h-full overflow-y-auto space-y-4 p-4">
+      {/* 错误提示 */}
+      {validationErrors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="flex items-center gap-2 text-red-800">
+            <span className="text-sm font-medium">配置错误:</span>
+          </div>
+          <ul className="mt-2 text-xs text-red-700 space-y-1">
+            {validationErrors.map((error, index) => (
+              <li key={index}>• {error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* 更新状态指示器 */}
+      {isUpdating && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 flex items-center gap-2">
+          <div className="animate-spin rounded-full h-3 w-3 border border-blue-600 border-t-transparent"></div>
+          <span className="text-xs text-blue-700">正在更新配置...</span>
+        </div>
+      )}
+
       {/* 基础设置 */}
       <Card className="overflow-hidden">
         <CardHeader
@@ -85,7 +126,6 @@ export const ChartConfig: React.FC<ChartConfigProps> = ({ onConfigChange }) => {
                 value={chartType}
                 onValueChange={(value: ChartType) => {
                   updateSeriesType(value);
-                  onConfigChange();
                 }}
               >
                 <SelectTrigger>
@@ -107,7 +147,10 @@ export const ChartConfig: React.FC<ChartConfigProps> = ({ onConfigChange }) => {
                 id="chart-title"
                 value={config.title.text}
                 onChange={(e) => handleConfigUpdate({
-                  title: { ...config.title, text: e.target.value }
+                  title: {
+                    ...config.title,
+                    text: e.target.value
+                  }
                 })}
               />
             </div>
@@ -412,13 +455,6 @@ export const ChartConfig: React.FC<ChartConfigProps> = ({ onConfigChange }) => {
         )}
       </Card>
 
-      {/* 应用配置按钮 */}
-      <Button
-        className="w-full"
-        onClick={onConfigChange}
-      >
-        应用配置
-      </Button>
-    </div>
+      </div>
   );
 };

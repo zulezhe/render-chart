@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
@@ -7,7 +7,16 @@ import { Slider } from '../ui/slider';
 import { useConfigManager } from '../../hooks/useConfigManager';
 
 export const LegendConfig: React.FC = () => {
-  const { config, updateConfig } = useConfigManager();
+  const { config, updateConfig, addConfigChangeListener } = useConfigManager();
+
+  // 使用配置变化监听器
+  useEffect(() => {
+    const unsubscribe = addConfigChangeListener(() => {
+      // 配置变化时的处理逻辑
+    });
+
+    return unsubscribe;
+  }, [addConfigChangeListener]);
 
   // 更新图例配置的通用函数
   const updateLegendConfig = (path: string, value: any) => {
